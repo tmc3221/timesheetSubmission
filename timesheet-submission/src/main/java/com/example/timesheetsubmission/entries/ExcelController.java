@@ -9,10 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.net.HttpHeaders;
 
 import javax.mail.MessagingException;
 
@@ -40,10 +44,12 @@ public class ExcelController {
             // Email the file
             sendEmailWithAttachment(file.getOriginalFilename(), bytes);
 
-            return ResponseEntity.ok("File uploaded successfully");
+            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/success.html").build();
+           //return "redirect:/success"; // Redirect to the success page
         } catch (IOException | MessagingException | EncryptedDocumentException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file");
+            //return "redirect:/error";
         }
     }
 
@@ -53,8 +59,8 @@ public class ExcelController {
         MimeMessageHelper helper;
         try {
             helper = new MimeMessageHelper(message, true);
-            helper.setFrom("mt0574576@gmail.com"); // Update with your email address
-            helper.setTo("tristanmcurtis844@gmail.com"); // Update with recipient's email address
+            helper.setFrom("tristanmcurtis844@gmail.com"); // Update with your email address
+            helper.setTo("tmcurti4@ncsu.edu"); // Update with recipient's email address
             helper.setSubject("Timesheet Uploaded");
             helper.setText("Please find the attached timesheet file.");
 
@@ -63,5 +69,16 @@ public class ExcelController {
         } catch (jakarta.mail.MessagingException e) {
             e.printStackTrace();
         }
+    }
+
+    @GetMapping("/success")
+    public String successPage() {
+        return "success";
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file");
     }
 }
